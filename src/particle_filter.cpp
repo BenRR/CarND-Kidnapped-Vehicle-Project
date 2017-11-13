@@ -73,7 +73,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     } else {
 
       double nt = t + yaw_rate * delta_t;
-      
+
       particles[i].x += velocity / yaw_rate * (sin(nt) - sin(t)) + noise_x(gen);
       particles[i].y += velocity / yaw_rate * (cos(t) - cos(nt)) + noise_y(gen);
       particles[i].theta = nt + noise_t(gen);
@@ -87,7 +87,19 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
+  for (int i = 0; i < observations.size() ; ++i) {
+      int idx = -1;
+      double current_error = -1;
+    for (int j = 0; j < predicted.size() ; ++j) {
+      double error =  pow(predicted[i].x - observations[i].x, 2) + pow(predicted[i].y - observations[i].y, 2);
+      if(j == 0 || error < current_error){
+        idx = j;
+        current_error = error;
+      }
+    }
 
+    observations[i].id = idx;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
@@ -108,6 +120,15 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+  vector<Particle> resampled;
+  default_random_engine gen;
+  discrete_distribution<int> dist(weights.begin(), weights.end());
+
+  for (int i = 0; i < particles.size() ; ++i) {
+    int idx = dist(gen);
+    resampled.push_back(particles[idx]);
+  }
+  particles = resampled;
 
 }
 
