@@ -25,6 +25,31 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
+	// Number of particles to draw
+	num_particles = 65;
+
+  default_random_engine gen;
+
+  normal_distribution<double> noise_x(0, std[0]);
+  normal_distribution<double> noise_y(0, std[1]);
+  normal_distribution<double> noise_t(0, std[2]);
+
+  for (int i = 0; i < num_particles; ++i) {
+    Particle p = {
+      i,
+      x + noise_x(gen),
+      y + noise_y(gen),
+      theta + noise_t(gen),
+      1.0
+    };
+    weights.push_back(1.0);
+    particles.push_back(p);
+
+  }
+
+	// Flag, if filter is initialized
+	is_initialized = true;
+
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
@@ -32,6 +57,28 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+  default_random_engine gen;
+  normal_distribution<double> noise_x(0, std_pos[0]);
+  normal_distribution<double> noise_y(0, std_pos[1]);
+  normal_distribution<double> noise_t(0, std_pos[2]);
+
+  for (int i = 0; i < num_particles; i++) {
+
+    double t = particles[i].theta;
+
+    if (fabs(yaw_rate) < 0.0001) {
+      // go straight
+      particles[i].x += delta_t * velocity * cos(t) + noise_x(gen);
+      particles[i].y += delta_t * velocity * sin(t) + noise_y(gen);
+    } else {
+
+      double nt = t + yaw_rate * delta_t;
+      
+      particles[i].x += velocity / yaw_rate * (sin(nt) - sin(t)) + noise_x(gen);
+      particles[i].y += velocity / yaw_rate * (cos(t) - cos(nt)) + noise_y(gen);
+      particles[i].theta = nt + noise_t(gen);
+    }
+  }
 
 }
 
