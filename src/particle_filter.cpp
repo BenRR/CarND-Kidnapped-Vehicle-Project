@@ -91,7 +91,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
     int idx = -1;
     double current_error = -1;
     for (int j = 0; j < predicted.size(); ++j) {
-      double error = pow(predicted[i].x - observations[i].x, 2) + pow(predicted[i].y - observations[i].y, 2);
+      double error = pow(predicted[j].x - observations[i].x, 2) + pow(predicted[j].y - observations[i].y, 2);
       if (j == 0 || error < current_error) {
         idx = j;
         current_error = error;
